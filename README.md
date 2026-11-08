@@ -1,7 +1,5 @@
 # Lwkripple
 
-[![npm version](https://img.shields.io/npm/v/lwkripple.svg)](https://www.npmjs.com/package/lwkripple)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/lwkripple)](https://bundlephobia.com/package/lwkripple)
 [![CI](https://github.com/LwkMoon/lwkripple/actions/workflows/ci.yml/badge.svg)](https://github.com/LwkMoon/lwkripple/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/lwkripple.svg)](LICENSE)
 
