@@ -1,0 +1,9 @@
+node_modules/
+dist/
+test/.tmp/
+*.ppm
+*.tgz
+.DS_Store
+.vscode/
+.idea/
+npm-debug.log*

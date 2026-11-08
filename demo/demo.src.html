@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>lwkripple: interactive water ripples for any website</title>
+<meta name="description" content="Make any section, button, image or the whole page behave like water. Zero dependencies, about 10 KB, WebGL2 with a Canvas fallback.">
+<meta name="theme-color" content="#061320">
+<meta property="og:type" content="website">
+<meta property="og:title" content="lwkripple">
+<meta property="og:description" content="Make any section, button, image or the whole page behave like water.">
+<meta property="og:image" content="https://lwkmoon.github.io/lwkripple/preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3C16 3 6 14 6 20a10 10 0 0020 0C26 14 16 3 16 3z' fill='%23f2b84b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#061320;--deep:#0b2b3f;--foam:#e8f4f0;--mute:#8fb0bd;--lamp:#f2b84b;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{background:var(--ink);scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;color:var(--foam);font:400 17px/1.55 "Instrument Sans",system-ui,sans-serif}
+h1,h2{font-family:"Instrument Serif",Georgia,serif;font-weight:400;margin:0;line-height:.98}
+h1{font-size:clamp(3.4rem,10vw,8.5rem);letter-spacing:-.02em}
+h2{font-size:clamp(2.2rem,5vw,3.8rem);letter-spacing:-.01em}
+p{margin:0;color:var(--mute);max-width:46ch}
+.wrap{max-width:1180px;margin:0 auto;padding:0 clamp(20px,4vw,48px)}
+#hero{min-height:92svh;display:flex;flex-direction:column;justify-content:space-between;padding:28px 0 44px;background:radial-gradient(120% 90% at 20% 0%,#10405a 0,var(--deep) 45%,var(--ink) 100%)}
+#hero .wrap{width:100%}
+.mark{font-weight:600;letter-spacing:.01em}
+.presets{display:flex;flex-wrap:wrap;gap:6px 22px;margin:28px 0 14px}
+.presets button{all:unset;cursor:pointer;color:var(--mute);padding:6px 0;border-bottom:2px solid transparent;font-weight:500}
+.presets button:hover{color:var(--foam)}
+.presets button[aria-pressed=true]{color:var(--foam);border-color:var(--lamp)}
+:focus-visible{outline:2px solid var(--lamp);outline-offset:3px;border-radius:4px}
+code,.code{font:500 .92rem ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--lamp)}
+.hint{margin-top:18px;font-size:.92rem}
+section.block{padding:clamp(64px,10vw,120px) 0}
+.split{display:grid;grid-template-columns:1fr 1.25fr;gap:clamp(28px,5vw,72px);align-items:center}
+#pic{height:clamp(260px,42vw,440px);border-radius:28px;background:var(--deep)}
+.ctl{display:flex;align-items:center;gap:14px;margin-top:26px;color:var(--mute);font-size:.95rem}
+input[type=range]{accent-color:var(--lamp);width:200px}
+.pills{display:flex;flex-wrap:wrap;gap:14px;margin-top:30px}
+.pill{all:unset;cursor:pointer;padding:16px 34px;border-radius:999px;border:1px solid rgba(232,244,240,.28);color:var(--foam);font-weight:500;background:rgba(232,244,240,.04)}
+.pill.lamp{border-color:rgba(242,184,75,.6);color:var(--lamp)}
+.pill[aria-pressed=true]{background:rgba(242,184,75,.14)}
+footer{padding:56px 0 80px;border-top:1px solid rgba(232,244,240,.1)}
+.install{all:unset;cursor:pointer;display:inline-block;margin-top:18px;padding:12px 18px;border-radius:12px;background:var(--deep);font:500 .92rem ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--lamp)}
+.install:hover{background:#0f3a54}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.links{display:flex;gap:22px}
+.links a,.flinks a{color:var(--mute);text-decoration:none;font-weight:500}
+.links a:hover,.flinks a:hover{color:var(--foam)}
+.snip{display:block;margin-top:18px}
+.flinks{display:flex;gap:22px;margin-top:26px}
+@media(max-width:760px){.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<section id="hero">
+  <div class="wrap nav"><span class="mark">lwkripple</span>
+    <nav class="links" aria-label="Project links"><a href="https://github.com/LwkMoon/lwkripple">GitHub</a><a href="https://www.npmjs.com/package/lwkripple">npm</a></nav></div>
+  <div class="wrap">
+    <h1>Make the web<br>feel fluid.</h1>
+    <div class="presets" role="group" aria-label="Water preset">
+      <button data-p="pond" aria-pressed="true">pond</button><button data-p="rain" aria-pressed="false">rain</button>
+      <button data-p="storm" aria-pressed="false">storm</button><button data-p="glass" aria-pressed="false">glass</button>
+      <button data-p="ocean" aria-pressed="false">ocean</button>
+    </div>
+    <div class="code" id="code">ripple('#hero', 'pond')</div>
+    <p class="hint">Move across this section, click, or tap. This is a live simulation, not an animation loop.</p>
+  </div>
+</section>
+
+<section class="block"><div class="wrap split">
+  <div>
+    <h2>Give images a surface.</h2>
+    <p style="margin-top:18px">Turn on refraction and the picture itself bends under the waves. This painting is generated in the page, so it needs no files.</p>
+    <code class="snip">ripple('#pic', { image: myCanvas })</code>
+    <label class="ctl">Intensity <input id="int" type="range" min="0.3" max="2.2" step="0.1" value="1" aria-label="Intensity"></label>
+  </div>
+  <div id="pic" role="img" aria-label="Lanterns on dark water, bending under ripples"></div>
+</div></section>
+
+<section class="block" style="padding-top:0"><div class="wrap">
+  <h2>Buttons, cards, any area.</h2>
+  <p style="margin-top:18px">Every element is an area. Small ones settle quickly and keep waves inside. You can also put it over the whole page.</p>
+  <div class="pills">
+    <button class="pill">Press me</button><button class="pill lamp">Or me</button>
+    <button class="pill" id="full" aria-pressed="false">Rain on the whole page</button>
+  </div>
+  <code class="snip">ripple('.pill', 'glass') &nbsp;&nbsp; ripple('fullscreen', 'rain')</code>
+</div></section>
+
+<footer><div class="wrap">
+  <h2 style="font-size:clamp(1.8rem,3.4vw,2.6rem)">About 10 KB. No dependencies.</h2>
+  <p style="margin-top:14px">WebGL2 where it exists, Canvas 2D everywhere else. React bindings included.</p>
+  <button class="install" id="copy" type="button" aria-label="Copy install command">npm install lwkripple</button>
+  <div class="flinks"><a href="https://github.com/LwkMoon/lwkripple">GitHub</a><a href="https://www.npmjs.com/package/lwkripple">npm</a><span style="color:var(--mute)">MIT licensed</span></div>
+</div></footer>
+
+<script>/*LIB*/</script>
+<script>
+const R = Lwkripple.ripple
+const hero = R('#hero', 'pond')
+const code = document.getElementById('code')
+document.querySelectorAll('[data-p]').forEach(b => b.addEventListener('click', () => {
+  hero.setPreset(b.dataset.p)
+  document.querySelectorAll('[data-p]').forEach(x => x.setAttribute('aria-pressed', String(x === b)))
+  code.textContent = `ripple('#hero', '${b.dataset.p}')`
+  hero.drop()
+}))
+
+// a painting made in the page: lanterns on dark water
+const cv = document.createElement('canvas'); cv.width = 1200; cv.height = 760
+const g = cv.getContext('2d')
+const sky = g.createLinearGradient(0, 0, 0, 760)
+sky.addColorStop(0, '#071a2b'); sky.addColorStop(.55, '#12536a'); sky.addColorStop(1, '#0a2a3c')
+g.fillStyle = sky; g.fillRect(0, 0, 1200, 760)
+let s = 11; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647
+for (let i = 0; i < 34; i++) {
+  const x = rnd() * 1200, y = 120 + rnd() * 560, r = 14 + rnd() * 30
+  const glow = g.createRadialGradient(x, y, 0, x, y, r * 4)
+  glow.addColorStop(0, 'rgba(255,214,120,.95)'); glow.addColorStop(.25, 'rgba(242,184,75,.45)'); glow.addColorStop(1, 'rgba(242,184,75,0)')
+  g.fillStyle = glow; g.fillRect(x - r * 4, y - r * 4, r * 8, r * 8)
+  g.fillStyle = '#ffe3a1'; g.beginPath(); g.arc(x, y, r * .55, 0, 7); g.fill()
+}
+g.strokeStyle = 'rgba(232,244,240,.12)'; g.lineWidth = 2
+for (let y = 60; y < 760; y += 52) { g.beginPath(); g.moveTo(0, y); g.lineTo(1200, y); g.stroke() }
+const pic = R('#pic', { image: cv, preset: 'pond' })
+document.getElementById('int').addEventListener('input', e => pic.update({ intensity: +e.target.value }))
+
+const copy = document.getElementById('copy')
+copy.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText('npm install lwkripple'); copy.textContent = 'Copied' }
+  catch { copy.textContent = 'Press Ctrl+C to copy' }
+  setTimeout(() => { copy.textContent = 'npm install lwkripple' }, 1600)
+})
+
+R('.pill', { preset: 'glass', color: 'rgba(160,220,240,.12)' })
+let full = null
+const tog = document.getElementById('full')
+tog.addEventListener('click', () => {
+  if (full) { full.destroy(); full = null } else { full = R('fullscreen', 'rain') }
+  tog.setAttribute('aria-pressed', String(!!full))
+  tog.textContent = full ? 'Stop the rain' : 'Rain on the whole page'
+})
+</script>
+</body>
+</html>

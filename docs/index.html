@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>lwkripple: interactive water ripples for any website</title>
+<meta name="description" content="Make any section, button, image or the whole page behave like water. Zero dependencies, about 10 KB, WebGL2 with a Canvas fallback.">
+<meta name="theme-color" content="#061320">
+<meta property="og:type" content="website">
+<meta property="og:title" content="lwkripple">
+<meta property="og:description" content="Make any section, button, image or the whole page behave like water.">
+<meta property="og:image" content="https://lwkmoon.github.io/lwkripple/preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3C16 3 6 14 6 20a10 10 0 0020 0C26 14 16 3 16 3z' fill='%23f2b84b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#061320;--deep:#0b2b3f;--foam:#e8f4f0;--mute:#8fb0bd;--lamp:#f2b84b;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{background:var(--ink);scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;color:var(--foam);font:400 17px/1.55 "Instrument Sans",system-ui,sans-serif}
+h1,h2{font-family:"Instrument Serif",Georgia,serif;font-weight:400;margin:0;line-height:.98}
+h1{font-size:clamp(3.4rem,10vw,8.5rem);letter-spacing:-.02em}
+h2{font-size:clamp(2.2rem,5vw,3.8rem);letter-spacing:-.01em}
+p{margin:0;color:var(--mute);max-width:46ch}
+.wrap{max-width:1180px;margin:0 auto;padding:0 clamp(20px,4vw,48px)}
+#hero{min-height:92svh;display:flex;flex-direction:column;justify-content:space-between;padding:28px 0 44px;background:radial-gradient(120% 90% at 20% 0%,#10405a 0,var(--deep) 45%,var(--ink) 100%)}
+#hero .wrap{width:100%}
+.mark{font-weight:600;letter-spacing:.01em}
+.presets{display:flex;flex-wrap:wrap;gap:6px 22px;margin:28px 0 14px}
+.presets button{all:unset;cursor:pointer;color:var(--mute);padding:6px 0;border-bottom:2px solid transparent;font-weight:500}
+.presets button:hover{color:var(--foam)}
+.presets button[aria-pressed=true]{color:var(--foam);border-color:var(--lamp)}
+:focus-visible{outline:2px solid var(--lamp);outline-offset:3px;border-radius:4px}
+code,.code{font:500 .92rem ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--lamp)}
+.hint{margin-top:18px;font-size:.92rem}
+section.block{padding:clamp(64px,10vw,120px) 0}
+.split{display:grid;grid-template-columns:1fr 1.25fr;gap:clamp(28px,5vw,72px);align-items:center}
+#pic{height:clamp(260px,42vw,440px);border-radius:28px;background:var(--deep)}
+.ctl{display:flex;align-items:center;gap:14px;margin-top:26px;color:var(--mute);font-size:.95rem}
+input[type=range]{accent-color:var(--lamp);width:200px}
+.pills{display:flex;flex-wrap:wrap;gap:14px;margin-top:30px}
+.pill{all:unset;cursor:pointer;padding:16px 34px;border-radius:999px;border:1px solid rgba(232,244,240,.28);color:var(--foam);font-weight:500;background:rgba(232,244,240,.04)}
+.pill.lamp{border-color:rgba(242,184,75,.6);color:var(--lamp)}
+.pill[aria-pressed=true]{background:rgba(242,184,75,.14)}
+footer{padding:56px 0 80px;border-top:1px solid rgba(232,244,240,.1)}
+.install{all:unset;cursor:pointer;display:inline-block;margin-top:18px;padding:12px 18px;border-radius:12px;background:var(--deep);font:500 .92rem ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--lamp)}
+.install:hover{background:#0f3a54}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.links{display:flex;gap:22px}
+.links a,.flinks a{color:var(--mute);text-decoration:none;font-weight:500}
+.links a:hover,.flinks a:hover{color:var(--foam)}
+.snip{display:block;margin-top:18px}
+.flinks{display:flex;gap:22px;margin-top:26px}
+@media(max-width:760px){.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<section id="hero">
+  <div class="wrap nav"><span class="mark">lwkripple</span>
+    <nav class="links" aria-label="Project links"><a href="https://github.com/LwkMoon/lwkripple">GitHub</a><a href="https://www.npmjs.com/package/lwkripple">npm</a></nav></div>
+  <div class="wrap">
+    <h1>Make the web<br>feel fluid.</h1>
+    <div class="presets" role="group" aria-label="Water preset">
+      <button data-p="pond" aria-pressed="true">pond</button><button data-p="rain" aria-pressed="false">rain</button>
+      <button data-p="storm" aria-pressed="false">storm</button><button data-p="glass" aria-pressed="false">glass</button>
+      <button data-p="ocean" aria-pressed="false">ocean</button>
+    </div>
+    <div class="code" id="code">ripple('#hero', 'pond')</div>
+    <p class="hint">Move across this section, click, or tap. This is a live simulation, not an animation loop.</p>
+  </div>
+</section>
+
+<section class="block"><div class="wrap split">
+  <div>
+    <h2>Give images a surface.</h2>
+    <p style="margin-top:18px">Turn on refraction and the picture itself bends under the waves. This painting is generated in the page, so it needs no files.</p>
+    <code class="snip">ripple('#pic', { image: myCanvas })</code>
+    <label class="ctl">Intensity <input id="int" type="range" min="0.3" max="2.2" step="0.1" value="1" aria-label="Intensity"></label>
+  </div>
+  <div id="pic" role="img" aria-label="Lanterns on dark water, bending under ripples"></div>
+</div></section>
+
+<section class="block" style="padding-top:0"><div class="wrap">
+  <h2>Buttons, cards, any area.</h2>
+  <p style="margin-top:18px">Every element is an area. Small ones settle quickly and keep waves inside. You can also put it over the whole page.</p>
+  <div class="pills">
+    <button class="pill">Press me</button><button class="pill lamp">Or me</button>
+    <button class="pill" id="full" aria-pressed="false">Rain on the whole page</button>
+  </div>
+  <code class="snip">ripple('.pill', 'glass') &nbsp;&nbsp; ripple('fullscreen', 'rain')</code>
+</div></section>
+
+<footer><div class="wrap">
+  <h2 style="font-size:clamp(1.8rem,3.4vw,2.6rem)">About 10 KB. No dependencies.</h2>
+  <p style="margin-top:14px">WebGL2 where it exists, Canvas 2D everywhere else. React bindings included.</p>
+  <button class="install" id="copy" type="button" aria-label="Copy install command">npm install lwkripple</button>
+  <div class="flinks"><a href="https://github.com/LwkMoon/lwkripple">GitHub</a><a href="https://www.npmjs.com/package/lwkripple">npm</a><span style="color:var(--mute)">MIT licensed</span></div>
+</div></footer>
+
+<script>"use strict";var Lwkripple=(()=>{var W=Object.defineProperty;var ue=Object.getOwnPropertyDescriptor;var de=Object.getOwnPropertyNames;var me=Object.prototype.hasOwnProperty;var pe=(o,e)=>{for(var t in e)W(o,t,{get:e[t],enumerable:!0})},fe=(o,e,t,i)=>{if(e&&typeof e=="object"||typeof e=="function")for(let r of de(e))!me.call(o,r)&&r!==t&&W(o,r,{get:()=>e[r],enumerable:!(i=ue(e,r))||i.enumerable});return o};var ve=o=>fe(W({},"__esModule",{value:!0}),o);var Le={};pe(Le,{autoInit:()=>N,default:()=>Me,presets:()=>he,ripple:()=>j,supported:()=>ce,version:()=>le});var C=class{constructor(e,t){this.maxVel=0;this.sponge=null;this.w=Math.max(3,Math.floor(e)),this.h=Math.max(3,Math.floor(t)),this.height=new Float32Array(this.w*this.h),this.vel=new Float32Array(this.w*this.h)}setEdges(e){if(e!=="absorb"){this.sponge=null;return}let{w:t,h:i}=this,r=Math.max(4,Math.min(16,Math.floor(Math.min(t,i)*.12))),s=new Float32Array(t*i);for(let n=0;n<i;n++)for(let a=0;a<t;a++){let h=Math.min(a,n,t-1-a,i-1-n),c=h>=r?1:h/r;s[n*t+a]=1-.3*(1-c)*(1-c)}this.sponge=s}clear(){this.height.fill(0),this.vel.fill(0),this.maxVel=0}step(e,t){let{w:i,h:r,height:s,vel:n,sponge:a}=this;for(let l=0;l<r;l++){let u=l*i,p=(l>0?l-1:l)*i,v=(l<r-1?l+1:l)*i;for(let m=0;m<i;m++){let d=u+m,f=s[d],g=s[u+(m>0?m-1:m)],b=s[u+(m<i-1?m+1:m)],E=(n[d]+e*(g+b+s[p+m]+s[v+m]-4*f))*t;a&&(E*=a[d]),n[d]=E}}let h=0,c=i*r;for(let l=0;l<c;l++){let u=n[l],p=(s[l]+u)*.9998,v=u<0?-u:u;v<1e-6&&p<1e-6&&p>-1e-6&&(u=0,p=0,n[l]=0),v>h&&(h=v),s[l]=p}this.maxVel=h}drop(e,t,i,r){let{w:s,h:n,height:a}=this,h=Math.max(.75,i/2),c=Math.ceil(h*4.9),l=Math.max(0,Math.floor(e)-c),u=Math.min(s-1,Math.floor(e)+c),p=Math.max(0,Math.floor(t)-c),v=Math.min(n-1,Math.floor(t)+c),m=1/(h*h);for(let d=p;d<=v;d++){let f=d+.5-t;for(let g=l;g<=u;g++){let b=g+.5-e,E=(b*b+f*f)*m;E>24||(a[d*s+g]-=r*.5*(2-E)*Math.exp(-E/2))}}}fillField(e){let{w:t,h:i,height:r}=this,s=0;for(let n=0;n<i;n++){let a=n*t,h=(n>0?n-1:n)*t,c=(n<i-1?n+1:n)*t;for(let l=0;l<t;l++){let u=l>0?l-1:l,p=l<t-1?l+1:l,v=r[a+l],m=r[a+u],d=r[a+p],f=r[h+l],g=r[c+l];e[s]=(d-m)*.5,e[s+1]=(g-f)*.5,e[s+2]=m+d+f+g-4*v,e[s+3]=v,s+=4}}}};var y={pond:{radius:20,strength:1,hoverStrength:.35,lifetime:4,speed:1,intensity:1,caustics:.2,auto:{rate:0,radius:[10,20],strength:[.6,1]}},rain:{radius:16,strength:.9,hoverStrength:.3,lifetime:2.5,speed:1,intensity:1.1,caustics:.1,auto:{rate:8,radius:[7,13],strength:[.55,1]}},storm:{radius:22,strength:1.2,hoverStrength:.4,lifetime:2.8,speed:1.1,intensity:1.2,caustics:.4,auto:{rate:12,radius:[10,26],strength:[.5,.9]}},glass:{radius:14,strength:.6,hoverStrength:.22,lifetime:1.8,speed:1,intensity:.7,caustics:0,auto:{rate:0,radius:[8,14],strength:[.4,.7]}},ocean:{radius:40,strength:1,hoverStrength:.3,lifetime:5.5,speed:.8,intensity:.75,caustics:.6,auto:{rate:.7,radius:[60,110],strength:[.4,.75],edge:!0}}},w=Object.keys(y);function Z(o,e,t,i,r,s,n,a){let h=(o*.591+e*.806)*i,c=h<0?0:h>1?1:h,l=-h<0?0:-h>1?1:-h,u=.3*c+.55*c*c*c,p=.42*l,v=-t*r;v=v<0?0:v>1?1:v;let m=Math.pow(v,1.5)*.5,d=u+m+p;d>1&&(d=1);let f=u+m;a[0]=Math.min(s[0]*f+n[0]*p,d),a[1]=Math.min(s[1]*f+n[1]*p,d),a[2]=Math.min(s[2]*f+n[2]*p,d),a[3]=d}function ee(o,e,t){let i=300*e/(60*o),r=Math.max(1,Math.min(8,Math.ceil(i/.6))),s=i/r,n=Math.min(s*s,.49),a=Math.exp(Math.log(.05)/(Math.max(.2,t)*60*r));return{substeps:r,k:n,damping:a}}function k(o){if(typeof HTMLImageElement<"u"&&o instanceof HTMLImageElement)return[o.naturalWidth,o.naturalHeight];let e=o;return[e.width,e.height]}var _=class{constructor(e){this.canvas=e;this.kind="canvas";this.img=null;this.src=null;this.image=null;this.fit="cover";this.gw=0;this.gh=0;this.cssW=1;this.px=[0,0,0,0];let t=e.getContext("2d");if(!t)throw new Error("lwkripple: Canvas 2D is not available");this.ctx=t,this.off=document.createElement("canvas"),this.offCtx=this.off.getContext("2d",{willReadFrequently:!0})}resize(e,t,i,r,s,n){this.cssW=e,this.canvas.width=i,this.canvas.height=r,this.gw=s,this.gh=n,this.off.width=s,this.off.height=n,this.img=this.offCtx.createImageData(s,n),this.buildSource()}setImage(e,t){return this.image=e,this.fit=t,this.buildSource()}buildSource(){if(this.src=null,!this.image||!this.gw)return!0;let[e,t]=k(this.image);if(!e||!t)return!1;let{gw:i,gh:r}=this,s=i,n=r;if(this.fit!=="fill"){let a=this.fit==="cover"?Math.max(i/e,r/t):Math.min(i/e,r/t);s=e*a,n=t*a}try{return this.offCtx.clearRect(0,0,i,r),this.offCtx.drawImage(this.image,(i-s)/2,(r-n)/2,s,n),this.src=this.offCtx.getImageData(0,0,i,r).data,!0}catch{return this.src=null,!1}}render(e,t){if(!this.img)return;let{gw:i,gh:r,src:s,px:n}=this,a=this.img.data,h=t.refractPx/(this.cssW/i),[c,l,u,p]=t.color,v=i*r;for(let d=0;d<v;d++){let f=d*4,g=e[f],b=e[f+1],E=c,$=l,Q=u,J=p;if(s){let T=Math.round(d%i+g*h),M=Math.round((d/i|0)+b*h);T=T<0?0:T>=i?i-1:T,M=M<0?0:M>=r?r-1:M;let I=(M*i+T)*4,S=s[I+3]/255,A=1-p;E+=s[I]/255*S*A,$+=s[I+1]/255*S*A,Q+=s[I+2]/255*S*A,J+=S*A}Z(g,b,e[f+2],t.gain,t.causticK,t.highlight,t.shadow,n);let P=1-n[3],U=(n[3]+J*P)*t.opacity;if(U<=4e-4){a[f]=a[f+1]=a[f+2]=a[f+3]=0;continue}let X=t.opacity/U;a[f]=Math.min(255,(n[0]+E*P)*X*255),a[f+1]=Math.min(255,(n[1]+$*P)*X*255),a[f+2]=Math.min(255,(n[2]+Q*P)*X*255),a[f+3]=U*255}this.offCtx.putImageData(this.img,0,0);let m=this.ctx;m.clearRect(0,0,this.canvas.width,this.canvas.height),m.imageSmoothingEnabled=!0,m.imageSmoothingQuality="high",m.drawImage(this.off,0,0,this.canvas.width,this.canvas.height)}clear(){this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height)}destroy(){}};var ge=`#version 300 es
+void main(){
+  vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
+}`,Ee=`#version 300 es
+precision highp float;
+precision highp int;
+precision highp sampler2D;
+uniform sampler2D uField;
+uniform sampler2D uImage;
+uniform vec2 uRes;
+uniform ivec2 uGrid;
+uniform vec2 uLight;
+uniform float uGain;
+uniform float uCaustic;
+uniform vec2 uRefract;
+uniform vec4 uColor;
+uniform vec3 uHi;
+uniform vec3 uSh;
+uniform float uOpacity;
+uniform int uHasImage;
+uniform vec2 uImgScale;
+uniform float uContain;
+out vec4 outColor;
+
+vec4 fieldAt(vec2 uv) {
+  vec2 g = uv * vec2(uGrid) - 0.5;
+  vec2 f0 = floor(g);
+  vec2 fr = g - f0;
+  ivec2 mx = uGrid - 1;
+  ivec2 i0 = clamp(ivec2(f0), ivec2(0), mx);
+  ivec2 i1 = clamp(ivec2(f0) + 1, ivec2(0), mx);
+  vec4 a = texelFetch(uField, ivec2(i0.x, i0.y), 0);
+  vec4 b = texelFetch(uField, ivec2(i1.x, i0.y), 0);
+  vec4 c = texelFetch(uField, ivec2(i0.x, i1.y), 0);
+  vec4 d = texelFetch(uField, ivec2(i1.x, i1.y), 0);
+  return mix(mix(a, b, fr.x), mix(c, d, fr.x), fr.y);
+}
+
+void main() {
+  vec2 uv = vec2(gl_FragCoord.x / uRes.x, 1.0 - gl_FragCoord.y / uRes.y);
+  vec4 f = fieldAt(uv);
+  vec2 slope = f.xy;
+  vec4 base = vec4(0.0);
+  if (uHasImage == 1) {
+    vec2 iuv = (uv + slope * uRefract - 0.5) * uImgScale + 0.5;
+    bool inside = iuv.x >= 0.0 && iuv.x <= 1.0 && iuv.y >= 0.0 && iuv.y <= 1.0;
+    vec4 c = texture(uImage, clamp(iuv, 0.0, 1.0));
+    base = (uContain > 0.5 && !inside) ? vec4(0.0) : c;
+  }
+  base = uColor + base * (1.0 - uColor.a);
+  float l = dot(slope, uLight) * uGain;
+  float hi = clamp(l, 0.0, 1.0);
+  float dk = clamp(-l, 0.0, 1.0);
+  float aHi = 0.3 * hi + 0.55 * hi * hi * hi;
+  float aDk = 0.42 * dk;
+  float ca = pow(clamp(-f.z * uCaustic, 0.0, 1.0), 1.5) * 0.5;
+  float a = min(aHi + ca + aDk, 1.0);
+  vec3 rgb = min(uHi * (aHi + ca) + uSh * aDk, vec3(a));
+  vec4 lit = vec4(rgb, a);
+  outColor = (lit + base * (1.0 - lit.a)) * uOpacity;
+}`,H=class{constructor(e){this.canvas=e;this.kind="webgl";this.prog=null;this.fieldTex=null;this.imgTex=null;this.dummyTex=null;this.u={};this.gw=0;this.gh=0;this.pxW=1;this.pxH=1;this.cssW=1;this.cssH=1;this.image=null;this.fit="cover";this.imageOk=!1;this.lost=!1;this.onLost=e=>{e.preventDefault(),this.lost=!0};this.onRestored=()=>{try{this.init(),this.lost=!1,this.onRestore?.()}catch{}};let t=e.getContext("webgl2",{alpha:!0,premultipliedAlpha:!0,antialias:!1,depth:!1,stencil:!1,preserveDrawingBuffer:!1});if(!t)throw new Error("lwkripple: WebGL2 is not available");this.gl=t,this.init(),e.addEventListener("webglcontextlost",this.onLost,!1),e.addEventListener("webglcontextrestored",this.onRestored,!1)}init(){let e=this.gl,t=(r,s)=>{let n=e.createShader(r);if(e.shaderSource(n,s),e.compileShader(n),!e.getShaderParameter(n,e.COMPILE_STATUS))throw new Error("lwkripple shader: "+e.getShaderInfoLog(n));return n},i=e.createProgram();if(e.attachShader(i,t(e.VERTEX_SHADER,ge)),e.attachShader(i,t(e.FRAGMENT_SHADER,Ee)),e.linkProgram(i),!e.getProgramParameter(i,e.LINK_STATUS))throw new Error("lwkripple link: "+e.getProgramInfoLog(i));this.prog=i;for(let r of["uField","uImage","uRes","uGrid","uLight","uGain","uCaustic","uRefract","uColor","uHi","uSh","uOpacity","uHasImage","uImgScale","uContain"])this.u[r]=e.getUniformLocation(i,r);this.dummyTex=e.createTexture(),e.bindTexture(e.TEXTURE_2D,this.dummyTex),e.texImage2D(e.TEXTURE_2D,0,e.RGBA,1,1,0,e.RGBA,e.UNSIGNED_BYTE,new Uint8Array([0,0,0,0])),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_MIN_FILTER,e.NEAREST),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_MAG_FILTER,e.NEAREST),this.imgTex=e.createTexture(),this.fieldTex=e.createTexture(),this.gw&&this.allocField(),this.image&&(this.imageOk=this.upload())}allocField(){let e=this.gl;e.activeTexture(e.TEXTURE0),e.bindTexture(e.TEXTURE_2D,this.fieldTex),e.texImage2D(e.TEXTURE_2D,0,e.RGBA32F,this.gw,this.gh,0,e.RGBA,e.FLOAT,null),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_MIN_FILTER,e.NEAREST),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_MAG_FILTER,e.NEAREST),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_WRAP_S,e.CLAMP_TO_EDGE),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_WRAP_T,e.CLAMP_TO_EDGE)}upload(){let e=this.gl;if(!this.image)return!1;try{return e.activeTexture(e.TEXTURE1),e.bindTexture(e.TEXTURE_2D,this.imgTex),e.pixelStorei(e.UNPACK_PREMULTIPLY_ALPHA_WEBGL,!0),e.pixelStorei(e.UNPACK_FLIP_Y_WEBGL,!1),e.texImage2D(e.TEXTURE_2D,0,e.RGBA,e.RGBA,e.UNSIGNED_BYTE,this.image),e.pixelStorei(e.UNPACK_PREMULTIPLY_ALPHA_WEBGL,!1),e.getError()!==e.NO_ERROR?!1:(e.generateMipmap(e.TEXTURE_2D),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_MIN_FILTER,e.LINEAR_MIPMAP_LINEAR),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_MAG_FILTER,e.LINEAR),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_WRAP_S,e.CLAMP_TO_EDGE),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_WRAP_T,e.CLAMP_TO_EDGE),!0)}catch{return e.pixelStorei(e.UNPACK_PREMULTIPLY_ALPHA_WEBGL,!1),!1}}resize(e,t,i,r,s,n){this.cssW=e,this.cssH=t,this.pxW=i,this.pxH=r,this.canvas.width=i,this.canvas.height=r,!this.lost&&(this.gl.viewport(0,0,i,r),(s!==this.gw||n!==this.gh)&&(this.gw=s,this.gh=n,this.allocField()))}setImage(e,t){return this.fit=t,this.image=e,e?this.lost?!0:(this.imageOk=this.upload(),this.imageOk):(this.imageOk=!1,!0)}render(e,t){if(this.lost||!this.prog)return;let i=this.gl,r=this.u;i.useProgram(this.prog),i.activeTexture(i.TEXTURE0),i.bindTexture(i.TEXTURE_2D,this.fieldTex),i.texSubImage2D(i.TEXTURE_2D,0,0,0,this.gw,this.gh,i.RGBA,i.FLOAT,e),i.activeTexture(i.TEXTURE1),i.bindTexture(i.TEXTURE_2D,this.imageOk?this.imgTex:this.dummyTex),i.uniform1i(r.uField,0),i.uniform1i(r.uImage,1),i.uniform2f(r.uRes,this.pxW,this.pxH),i.uniform2i(r.uGrid,this.gw,this.gh),i.uniform2f(r.uLight,.591,.806),i.uniform1f(r.uGain,t.gain),i.uniform1f(r.uCaustic,t.causticK),i.uniform2f(r.uRefract,t.refractPx/this.cssW,t.refractPx/this.cssH),i.uniform4f(r.uColor,t.color[0],t.color[1],t.color[2],t.color[3]),i.uniform3f(r.uHi,t.highlight[0],t.highlight[1],t.highlight[2]),i.uniform3f(r.uSh,t.shadow[0],t.shadow[1],t.shadow[2]),i.uniform1f(r.uOpacity,t.opacity),i.uniform1i(r.uHasImage,this.imageOk?1:0);let s=1,n=1;if(this.imageOk&&this.image&&this.fit!=="fill"){let[a,h]=k(this.image),c=this.cssW/this.cssH,l=a/h;this.fit==="cover"?c>l?n=l/c:s=c/l:c>l?s=c/l:n=l/c}i.uniform2f(r.uImgScale,s,n),i.uniform1f(r.uContain,this.fit==="contain"?1:0),i.drawArrays(i.TRIANGLES,0,3)}clear(){this.lost||(this.gl.clearColor(0,0,0,0),this.gl.clear(this.gl.COLOR_BUFFER_BIT))}destroy(){this.canvas.removeEventListener("webglcontextlost",this.onLost,!1),this.canvas.removeEventListener("webglcontextrestored",this.onRestored,!1);try{this.gl.getExtension("WEBGL_lose_context")?.loseContext()}catch{}}};var ye=["fullscreen","page","viewport","window"];function te(o){if(o==null)return["fullscreen"];if(typeof window<"u"&&(o===window||o===document||o===document.body||o===document.documentElement))return["fullscreen"];if(typeof o=="string"){if(ye.includes(o.trim().toLowerCase()))return["fullscreen"];try{return Array.from(document.querySelectorAll(o))}catch{return[]}}return o instanceof Element?[o]:typeof o.length=="number"?Array.from(o).filter(e=>e instanceof Element):[]}function x(o){typeof console<"u"&&console.warn("[lwkripple] "+o)}var B=null;function K(o){if(!B){let r=document.createElement("canvas");r.width=r.height=1,B=r.getContext("2d",{willReadFrequently:!0})}let e=B;if(!e||(e.fillStyle="#123456",e.fillStyle=o,e.fillStyle==="#123456"&&o.trim().toLowerCase()!=="#123456"))return null;e.clearRect(0,0,1,1),e.fillRect(0,0,1,1);let t=e.getImageData(0,0,1,1).data,i=t[3]/255;return i===0?[0,0,0,0]:[t[0]/255/i,t[1]/255/i,t[2]/255/i,i]}function D(o){return new Promise((e,t)=>{let i=new Image;i.crossOrigin="anonymous",i.decoding="async",i.onload=()=>e(i),i.onerror=()=>t(new Error("could not load "+o.slice(0,80)+" (missing file, or the server blocks cross-origin use)")),i.src=o})}function ie(o){let e=/url\((['"]?)(.*?)\1\)/.exec(getComputedStyle(o).backgroundImage);return e?e[2]:null}function Y(o){return o==="contain"||o==="scale-down"?"contain":o==="fill"?"fill":"cover"}var q=1/60,we=9e4,ne=45e5,Re=.0015,Te=new Set(["CANVAS","VIDEO","AUDIO","INPUT","TEXTAREA","SELECT","IFRAME","BR","HR","OBJECT","EMBED","PROGRESS","METER"]),z=new WeakMap,F=null,R=(o,e)=>o+Math.random()*(e-o),O=class o{constructor(e,t){this.hostEl=null;this.wrapper=null;this.sim=null;this.field=new Float32Array(0);this.phys={substeps:2,k:.2,damping:.99};this.cssW=0;this.cssH=0;this.cellX=4;this.cellY=4;this.dirty=!0;this.raf=0;this.last=0;this.acc=0;this.idle=0;this.autoAcc=0;this.paused=!1;this.offscreen=!1;this.destroyed=!1;this.lastPt=null;this.ro=null;this.mo=null;this.io=null;this.mq=null;this.imgToken=0;this.sourceEl=null;this.sourceHidden=!1;this.savedOpacity="";this.savedHost=null;this.readySent=!1;this.regKey=null;this.radiusPx=20;this.clickStrength=1;this.hoverStrength=.35;this.autoRate=0;this.autoDef=y.pond.auto;this.doHover=!0;this.doClick=!0;this.params={gain:14,causticK:0,refractPx:90,opacity:1,color:[0,0,0,0],highlight:[1,1,1],shadow:[0,.03,.08]};this.onMotion=()=>{this.recompute(),this.rebuild(),this.wake()};this.lifetime=4;this.speed=1;this.onMove=e=>{if(!this.doHover||!this.sim)return;let t=this.local(e);if(!t.inside){this.lastPt=null;return}let i=this.lastPt;if(!i){this.lastPt={x:t.x,y:t.y,t:e.timeStamp};return}let r=t.x-i.x,s=t.y-i.y,n=Math.hypot(r,s),a=Math.max(8,this.radiusPx*.5);if(n<a)return;let h=n/Math.max(1,e.timeStamp-i.t),c=this.hoverStrength*(.45+Math.min(h/1.2,1)*.9),l=Math.min(6,Math.floor(n/a));for(let u=1;u<=l;u++)this.addDrop(i.x+r*u/l,i.y+s*u/l,c,this.radiusPx*.55);this.lastPt={x:t.x,y:t.y,t:e.timeStamp}};this.onDown=e=>{if(!this.doClick||!this.sim)return;let t=this.local(e);t.inside&&(this.addDrop(t.x,t.y,this.clickStrength*1.3,this.radiusPx*1.2),this.lastPt={x:t.x,y:t.y,t:e.timeStamp})};this.onLeave=()=>{this.lastPt=null};this.frame=e=>{this.raf=0;let t=this.sim;if(this.destroyed||!t)return;let i=this.last?Math.min((e-this.last)/1e3,.1):q;if(this.last=e,this.acc+=i,this.autoRate>0)for(this.autoAcc+=this.autoRate*i;this.autoAcc>=1;)this.autoAcc-=1,this.autoDrop();let r=0,{substeps:s,k:n,damping:a}=this.phys;for(;this.acc>=q&&r<3;){for(let h=0;h<s;h++)t.step(n,a);this.acc-=q,r++,this.dirty=!0}if(r===3&&(this.acc=0),this.dirty&&(t.fillField(this.field),this.rend.render(this.field,this.params),this.dirty=!1),t.maxVel>Re||this.autoRate>0)this.idle=0;else if(++this.idle>30)return;this.raf=requestAnimationFrame(this.frame)};if(this.user={...t},this.fullscreen=e==="fullscreen",this.canvasEl=document.createElement("canvas"),e==="fullscreen")F=this,document.body.appendChild(this.canvasEl);else{let r=e;if(r instanceof HTMLImageElement)r=this.wrapImage(r);else if(Te.has(r.tagName))throw new Error(`lwkripple: <${r.tagName.toLowerCase()}> cannot hold an effect. Wrap it in a container and target that.`);this.hostEl=r,this.regKey=e,z.set(e,this),this.savedHost={position:r.style.position,isolation:r.style.isolation},getComputedStyle(r).position==="static"&&(r.style.position="relative"),r.insertBefore(this.canvasEl,r.firstChild)}if(this.canvasEl.setAttribute("aria-hidden","true"),this.canvasEl.setAttribute("data-lwkripple-canvas",""),this.recompute(),this.styleCanvas(),this.makeRenderer(),this.hostEl&&typeof MutationObserver<"u"){let r=this.hostEl;this.mo=new MutationObserver(()=>{!this.destroyed&&this.canvasEl.parentNode!==r&&r.insertBefore(this.canvasEl,r.firstChild)}),this.mo.observe(r,{childList:!0})}this.ro=new ResizeObserver(()=>this.rebuild()),this.ro.observe(this.canvasEl);let i=this.hostEl??window;i.addEventListener("pointermove",this.onMove,{passive:!0}),i.addEventListener("pointerdown",this.onDown,{passive:!0}),i.addEventListener("pointerleave",this.onLeave,{passive:!0}),this.hostEl&&this.user.pauseOffscreen!==!1&&typeof IntersectionObserver<"u"&&(this.io=new IntersectionObserver(r=>{this.offscreen=!r[r.length-1].isIntersecting,this.offscreen?this.stopRaf():this.wake()}),this.io.observe(this.hostEl)),typeof matchMedia=="function"&&(this.mq=matchMedia("(prefers-reduced-motion: reduce)"),this.mq.addEventListener?.("change",this.onMotion)),this.rebuild(),this.setupImage()}static create(e,t){return e==="fullscreen"?F?.destroy():z.get(e)?.destroy(),new o(e,t)}get element(){return this.hostEl}get canvas(){return this.destroyed?null:this.canvasEl}get renderer(){return this.destroyed?"none":this.rend.kind}drop(e,t,i,r){if(this.destroyed||!this.sim)return;let s,n,a,h;if(typeof e=="object"&&e!==null){let c=this.canvasEl.getBoundingClientRect();s=e.clientX-c.left,n=e.clientY-c.top,a=t,h=i}else typeof e=="number"&&typeof t=="number"?(s=e,n=t,a=i,h=r):(s=R(.1,.9)*this.cssW,n=R(.1,.9)*this.cssH);this.addDrop(s,n,(a??1)*this.clickStrength,h??this.radiusPx)}pause(){this.paused=!0,this.stopRaf()}resume(){this.paused=!1,this.wake()}clear(){this.sim?.clear(),this.dirty=!0,this.wake()}setPreset(e){this.update({preset:e})}update(e){if(this.destroyed)return;let t=this.user;this.user={...t,...e},this.recompute();let i=r=>r in e&&e[r]!==t[r];i("renderer")&&(this.recreateCanvas(),this.makeRenderer()),(i("layer")||i("zIndex"))&&this.styleCanvas(),(i("edges")||i("resolution")||i("pixelRatio")||i("renderer")||i("preset")||i("speed")||i("lifetime"))&&this.rebuild(i("edges")||i("resolution")||i("pixelRatio")||i("renderer")),(i("image")||i("fit")||i("renderer"))&&this.setupImage(),this.dirty=!0,this.wake()}destroy(){if(this.destroyed)return;this.destroyed=!0,this.stopRaf(),this.mo?.disconnect(),this.ro?.disconnect(),this.io?.disconnect(),this.mq?.removeEventListener?.("change",this.onMotion);let e=this.hostEl??window;if(e.removeEventListener("pointermove",this.onMove),e.removeEventListener("pointerdown",this.onDown),e.removeEventListener("pointerleave",this.onLeave),this.releaseSource(),this.rend.destroy(),this.canvasEl.remove(),this.hostEl&&this.savedHost&&(this.hostEl.style.position=this.savedHost.position,this.hostEl.style.isolation=this.savedHost.isolation),this.wrapper&&this.wrapper.parentNode){let t=this.sourceEl??this.wrapper.querySelector("img");t&&this.wrapper.parentNode.insertBefore(t,this.wrapper),this.wrapper.remove()}this.regKey&&z.delete(this.regKey),F===this&&(F=null)}wrapImage(e){let t=getComputedStyle(e),i=document.createElement("span");return i.setAttribute("data-lwkripple-wrap",""),i.style.cssText=`position:relative;display:${t.display==="inline"?"inline-block":t.display};line-height:0;max-width:100%;`,e.parentNode?.insertBefore(i,e),i.appendChild(e),this.wrapper=i,this.sourceEl=e,this.user.image===void 0&&(this.user.image=e),this.user.fit===void 0&&(this.user.fit=Y(t.objectFit)),i}effectiveLayer(){return this.user.layer?this.user.layer:this.fullscreen||this.sourceEl&&!this.sourceHidden?"over":"under"}styleCanvas(){let e=this.effectiveLayer(),t=this.canvasEl.style;t.cssText=this.fullscreen?"position:fixed;left:0;top:0;right:0;bottom:0;width:100%;height:100%;pointer-events:none;display:block;":"position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;display:block;border-radius:inherit;",t.zIndex=String(e==="under"?-1:this.user.zIndex??(this.fullscreen?9999:1)),this.hostEl&&this.savedHost&&(this.hostEl.style.isolation=e==="under"?"isolate":this.savedHost.isolation)}recreateCanvas(){let e=this.canvasEl,t=document.createElement("canvas");for(let i of Array.from(e.attributes))t.setAttribute(i.name,i.value);e.replaceWith(t),this.ro?.unobserve(e),this.canvasEl=t,this.ro?.observe(t),this.styleCanvas()}makeRenderer(){this.rend?.destroy();let e=this.user.renderer??"auto";if(e!=="canvas")try{let t=new H(this.canvasEl);t.onRestore=()=>{this.dirty=!0,this.wake()},this.rend=t;return}catch(t){e==="webgl"&&x(String(t.message)),this.recreateCanvas()}this.rend=new _(this.canvasEl)}reduced(){return(this.user.reducedMotion??"respect")==="respect"&&!!this.mq?.matches}recompute(){let e=this.user,t=y[e.preset??"pond"]??y.pond,i=this.reduced(),r=e.strength??1,s=!!this.hostEl&&(this.hostEl.tagName==="BUTTON"||this.hostEl.getAttribute("role")==="button");this.radiusPx=e.radius??t.radius,this.clickStrength=t.strength*r*(i?.5:1),this.hoverStrength=t.hoverStrength*r,this.autoDef=t.auto,this.autoRate=i||e.auto===!1?0:typeof e.auto=="number"?e.auto:e.auto===!0?t.auto.rate||1:t.auto.rate,this.doHover=!i&&(e.hover??!s),this.doClick=e.click??!0;let n=(e.intensity??1)*t.intensity,a=e.caustics===!0?Math.max(t.caustics,.5):e.caustics===!1?0:typeof e.caustics=="number"?e.caustics:t.caustics,h=(l,u)=>{let p=l?K(l):null;return p?[p[0],p[1],p[2]]:u},c=[0,0,0,0];if(e.color){let l=K(e.color);l?c=[l[0]*l[3],l[1]*l[3],l[2]*l[3],l[3]]:x("unknown color: "+e.color)}this.params={gain:14*n,causticK:40*a*n,refractPx:90*n,opacity:Math.max(0,Math.min(1,e.opacity??1)),color:c,highlight:h(e.highlight,[1,1,1]),shadow:h(e.shadow,[0,.03,.08])},this.lifetime=(e.lifetime??t.lifetime)*(i?.5:1),this.speed=(e.speed??1)*t.speed}rebuild(e=!0){if(this.destroyed)return;let t=this.canvasEl.clientWidth,i=this.canvasEl.clientHeight;if(t<2||i<2){this.cssW=0,this.cssH=0,this.sim=null;return}if(e||!this.sim||t!==this.cssW||i!==this.cssH){this.cssW=t,this.cssH=i;let r=Math.max(1,Math.min(this.user.pixelRatio??(typeof devicePixelRatio=="number"?devicePixelRatio:1),2)),s=Math.round(t*r),n=Math.round(i*r);if(s*n>ne){let l=Math.sqrt(ne/(s*n));s=Math.round(s*l),n=Math.round(n*l)}let a=this.user.resolution??(Math.min(t,i)<140?2:4);a=Math.max(a,Math.sqrt(t*i/we));let h=Math.max(8,Math.ceil(t/a)),c=Math.max(8,Math.ceil(i/a));this.cellX=t/h,this.cellY=i/c,this.sim=new C(h,c),this.sim.setEdges(this.user.edges??(Math.min(t,i)<160?"absorb":"reflect")),this.field=new Float32Array(h*c*4),this.rend.resize(t,i,s,n,h,c)}this.phys=ee((this.cellX+this.cellY)/2,this.speed,this.lifetime),this.dirty=!0,this.wake()}async setupImage(){let e=++this.imgToken;this.releaseSource();let t=this.user.image,i=this.user.fit;if(!t){this.rend.setImage(null,"cover"),this.styleCanvas(),this.dirty=!0,this.wake(),this.ready();return}try{let r,s=i??"cover";if(t==="auto"){let a=this.hostEl,h=a?ie(a):null;if(!h)throw new Error("image: 'auto' needs an element with a CSS background-image url()");if(a&&!i){let c=getComputedStyle(a).backgroundSize;s=c==="contain"?"contain":c==="100% 100%"?"fill":"cover"}r=await D(h)}else typeof t=="string"?r=await D(t):typeof HTMLImageElement<"u"&&t instanceof HTMLImageElement?(i||(s=Y(getComputedStyle(t).objectFit)),t.complete||await new Promise((a,h)=>{t.addEventListener("load",()=>a(),{once:!0}),t.addEventListener("error",()=>h(new Error("image failed to load")),{once:!0})}),r=t.crossOrigin?t:await D(t.currentSrc||t.src),this.sourceEl=this.hostEl&&this.hostEl.contains(t)?t:this.sourceEl):r=t;if(e!==this.imgToken||this.destroyed)return;if(!this.rend.setImage(r,s))throw new Error('the browser blocked this image for effects (add crossorigin="anonymous" and CORS headers). Falling back to plain water.');this.sourceEl&&(this.savedOpacity=this.sourceEl.style.opacity,this.sourceEl.style.opacity="0",this.sourceHidden=!0)}catch(r){if(e!==this.imgToken)return;this.rend.setImage(null,"cover"),x(String(r.message))}this.styleCanvas(),this.dirty=!0,this.wake(),this.ready()}releaseSource(){this.sourceEl&&this.sourceHidden&&(this.sourceEl.style.opacity=this.savedOpacity),this.sourceHidden=!1}ready(){this.readySent||(this.readySent=!0,this.user.onReady?.(this))}addDrop(e,t,i,r){let s=this.sim;if(!s)return;let a=Math.min(r,Math.max(5,.45*Math.min(this.cssW,this.cssH)))/((this.cellX+this.cellY)/2);s.drop(e/this.cellX,t/this.cellY,a,Math.min(i,1.8)*.2*a),this.dirty=!0,this.wake()}local(e){let t=this.canvasEl.getBoundingClientRect(),i=e.clientX-t.left,r=e.clientY-t.top;return{x:i,y:r,inside:i>=0&&r>=0&&i<=t.width&&r<=t.height}}stopRaf(){this.raf&&(cancelAnimationFrame(this.raf),this.raf=0)}wake(){this.destroyed||this.paused||this.offscreen||this.raf||!this.sim||(this.idle=0,this.last=0,this.raf=requestAnimationFrame(this.frame))}autoDrop(){let e=this.autoDef,t=R(e.radius[0],e.radius[1])*(this.radiusPx/(y[this.user.preset??"pond"]??y.pond).radius),i=R(e.strength[0],e.strength[1]),r=R(.05,.95)*this.cssW,s=R(.05,.95)*this.cssH;if(e.edge){let n=Math.random()*4|0;n===0?s=0:n===1?s=this.cssH:n===2?r=0:r=this.cssW}this.addDrop(r,s,i*(this.clickStrength/Math.max(.01,y[this.user.preset??"pond"].strength)),t)}},G=class{constructor(e){this.items=e}get element(){return this.items[0]?.element??null}get canvas(){return this.items[0]?.canvas??null}get renderer(){return this.items[0]?.renderer??"none"}drop(e,t,i,r){for(let s of this.items)s.drop(e,t,i,r)}pause(){this.items.forEach(e=>e.pause())}resume(){this.items.forEach(e=>e.resume())}clear(){this.items.forEach(e=>e.clear())}setPreset(e){this.items.forEach(t=>t.setPreset(e))}update(e){this.items.forEach(t=>t.update(e))}destroy(){this.items.forEach(e=>e.destroy())}};var L=o=>o===void 0||o===""?void 0:Number.isFinite(Number(o))?Number(o):void 0,oe=o=>o===void 0?void 0:o!=="false"&&o!=="0";function N(o=document){let e=[];return o.querySelectorAll("[data-lwkripple]").forEach(t=>{let i=t.dataset,r=i.lwkripple,s={preset:w.includes(r)?r:"pond",image:i.lwkrippleImage||void 0,color:i.lwkrippleColor,intensity:L(i.lwkrippleIntensity),radius:L(i.lwkrippleRadius),speed:L(i.lwkrippleSpeed),lifetime:L(i.lwkrippleLifetime),hover:oe(i.lwkrippleHover),click:oe(i.lwkrippleClick),layer:i.lwkrippleLayer==="over"||i.lwkrippleLayer==="under"?i.lwkrippleLayer:void 0};i.lwkrippleAuto!==void 0&&(s.auto=i.lwkrippleAuto==="true"?!0:i.lwkrippleAuto==="false"?!1:L(i.lwkrippleAuto));for(let n of Object.keys(s))s[n]===void 0&&delete s[n];e.push(V(t,s))}),e}var le="0.1.0",he=w,ae={element:null,canvas:null,renderer:"none",drop(){},pause(){},resume(){},clear(){},setPreset(){},update(){},destroy(){}};function V(o,e){let t=typeof e=="string"?{preset:e}:e??{};if(typeof window>"u"||typeof document>"u")return ae;t.preset&&!w.includes(t.preset)&&(x(`unknown preset "${t.preset}", using "pond". Available: ${w.join(", ")}`),t.preset="pond");let i=te(o);if(!i.length)return x("nothing matched "+String(o)),ae;let r=i.map(s=>O.create(s,t));return r.length===1?r[0]:new G(r)}function ce(){try{return{webgl:!!document.createElement("canvas").getContext("webgl2")}}catch{return{webgl:!1}}}var j=V;var Me=j;if(typeof window<"u"&&!window.LWKRIPPLE_NO_AUTO){let o=()=>{N()};document.readyState==="loading"?document.addEventListener("DOMContentLoaded",o):o()}return ve(Le);})();
+</script>
+<script>
+const R = Lwkripple.ripple
+const hero = R('#hero', 'pond')
+const code = document.getElementById('code')
+document.querySelectorAll('[data-p]').forEach(b => b.addEventListener('click', () => {
+  hero.setPreset(b.dataset.p)
+  document.querySelectorAll('[data-p]').forEach(x => x.setAttribute('aria-pressed', String(x === b)))
+  code.textContent = `ripple('#hero', '${b.dataset.p}')`
+  hero.drop()
+}))
+
+// a painting made in the page: lanterns on dark water
+const cv = document.createElement('canvas'); cv.width = 1200; cv.height = 760
+const g = cv.getContext('2d')
+const sky = g.createLinearGradient(0, 0, 0, 760)
+sky.addColorStop(0, '#071a2b'); sky.addColorStop(.55, '#12536a'); sky.addColorStop(1, '#0a2a3c')
+g.fillStyle = sky; g.fillRect(0, 0, 1200, 760)
+let s = 11; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647
+for (let i = 0; i < 34; i++) {
+  const x = rnd() * 1200, y = 120 + rnd() * 560, r = 14 + rnd() * 30
+  const glow = g.createRadialGradient(x, y, 0, x, y, r * 4)
+  glow.addColorStop(0, 'rgba(255,214,120,.95)'); glow.addColorStop(.25, 'rgba(242,184,75,.45)'); glow.addColorStop(1, 'rgba(242,184,75,0)')
+  g.fillStyle = glow; g.fillRect(x - r * 4, y - r * 4, r * 8, r * 8)
+  g.fillStyle = '#ffe3a1'; g.beginPath(); g.arc(x, y, r * .55, 0, 7); g.fill()
+}
+g.strokeStyle = 'rgba(232,244,240,.12)'; g.lineWidth = 2
+for (let y = 60; y < 760; y += 52) { g.beginPath(); g.moveTo(0, y); g.lineTo(1200, y); g.stroke() }
+const pic = R('#pic', { image: cv, preset: 'pond' })
+document.getElementById('int').addEventListener('input', e => pic.update({ intensity: +e.target.value }))
+
+const copy = document.getElementById('copy')
+copy.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText('npm install lwkripple'); copy.textContent = 'Copied' }
+  catch { copy.textContent = 'Press Ctrl+C to copy' }
+  setTimeout(() => { copy.textContent = 'npm install lwkripple' }, 1600)
+})
+
+R('.pill', { preset: 'glass', color: 'rgba(160,220,240,.12)' })
+let full = null
+const tog = document.getElementById('full')
+tog.addEventListener('click', () => {
+  if (full) { full.destroy(); full = null } else { full = R('fullscreen', 'rain') }
+  tog.setAttribute('aria-pressed', String(!!full))
+  tog.textContent = full ? 'Stop the rain' : 'Rain on the whole page'
+})
+</script>
+</body>
+</html>
